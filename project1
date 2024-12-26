@@ -1,0 +1,518 @@
+/*
+
+   */
+package projecttrial;
+import java.io.*;
+import java.util.*;
+public class Main {
+    public static void main(String[] args) {
+        String namefile = "C:\\Users\\Hamza\\Downloads\\name.txt";
+        String inventoryFile = "C:\\Users\\Hamza\\Downloads\\inventory.txt";
+        String ordersFile = "C:\\Users\\Hamza\\Downloads\\orders.txt";
+        String offersFile = "C:\\Users\\Hamza\\OneDrive\\offerss.txt"; 
+        Scanner input = new Scanner(System.in);
+        while (true) {
+            System.out.println("Hello user!!");
+            System.out.println("login or signup");
+            String option1 = input.nextLine();
+            if (option1.equals("login")||(option1.equals("Login"))) {
+                String username = login(namefile, input);
+                if (username == null) {
+                    continue; 
+                }
+                if (username.equals("admin")) {
+                    adminMenu(inventoryFile, ordersFile, offersFile,input);
+                } else {
+                    userMenu(username, inventoryFile, ordersFile, input);
+                }
+            } else if (option1.equals("Signup")||(option1.equals("Signup"))) {
+                signup(namefile, input);
+            } else if (option1.equals("exit")) {
+                System.out.println("Exiting the application. Goodbye!");
+                break;
+            } else {
+                System.out.println("Invalid option, please enter 'login', 'signup', or 'exit'.");
+            }
+        }
+        input.close();
+    }
+
+    public static String login(String namefile, Scanner input) {
+        while (true) {
+            System.out.println("Please enter your username:");
+            String name = input.nextLine();
+            if (name.equalsIgnoreCase("exit")) {
+                return null; 
+            }
+            System.out.println("Please enter your password:");
+            String pass = input.nextLine();
+            if (name.equals("admin") && pass.equals("admin123")) {
+                System.out.println("Welcome, Admin!");
+                return "admin";
+            }
+            boolean match = false;
+            try (BufferedReader b = new BufferedReader(new FileReader(namefile))) {
+                String line;
+                while ((line = b.readLine()) != null) {
+                    String[] parts = line.split(" ");
+                    if (parts.length >= 2 && parts[0].equals(name) && parts[1].equals(pass)) {
+                        match = true;
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading the file: " + e.getMessage());
+                System.exit(0);
+            }
+            if (match) {
+                System.out.println("Welcome, " + name + "!");
+                return name;
+            } else {
+                System.out.println("Incorrect username or password. Please try again or type \"exit\" to go back.");
+            }
+        }
+    }
+    public static void signup(String namefile, Scanner input) {
+        System.out.println("Please enter a username:");
+        String newName = input.nextLine();
+        	System.out.println("Please enter a password:");
+            String newPass = input.nextLine();
+            String phoneNumber;
+        while (true) {
+            System.out.println("Please enter your phone number (11 digits):");
+            phoneNumber = input.nextLine();
+            if (phoneNumber.matches("\\d{11}")) {
+                break; 
+            } else {
+                System.out.println("Invalid phone number. Please enter exactly 11 numbers.");
+            }
+        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(namefile, true))) {
+            writer.write(newName + " " + newPass + " " + phoneNumber);
+            writer.newLine();
+            System.out.println("Account created successfully!");
+        } catch (IOException e) {
+            System.out.println("Error writing to the file: " + e.getMessage());
+        }
+    }
+    public static void adminMenu(String inventoryFile, String ordersFile, String offersFile, Scanner input) {
+        while (true) {
+            System.out.println("\nAdmin Menu:");
+            System.out.println("1. View Inventory");
+            System.out.println("2. View Orders");
+            System.out.println("3. Manage Inventory");
+            System.out.println("4. Manage Today's Offers");
+            System.out.println("5. Logout (Go Back to Login/Signup)");
+            System.out.print("Choose an option: ");
+            int choice = input.nextInt();
+            input.nextLine(); 
+            switch (choice) {
+                case 1:
+                    viewInventory(inventoryFile);
+                    break;
+                case 2:
+                    viewOrders(ordersFile);
+                    break;
+                case 3:
+                    manageInventory(inventoryFile, input);
+                    break;
+                case 4:
+                    manageOffers(offersFile, input);
+                    break;
+                case 5:
+                    System.out.println("Returning to the main menu...");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+
+    public static void manageOffers(String offersFile, Scanner input) {
+        while (true) {
+            System.out.println("\nManage Today's Offers:");
+            System.out.println("1. View Offers");
+            System.out.println("2. Add Offer");
+            System.out.println("3. Update Offer");
+            System.out.println("4. Remove Offer");
+            System.out.println("5. Exit");
+            System.out.print("Choose an option: ");
+            int choice = input.nextInt();
+            input.nextLine();
+            switch (choice) {
+                case 1:
+                    viewOffers(offersFile);
+                    break;
+                case 2:
+                    addOffer(offersFile, input);
+                    break;
+                case 3:
+                    updateOffer(offersFile, input);
+                    break;
+                case 4:
+                    removeOffer(offersFile, input);
+                    break;
+                case 5:
+                    System.out.println("Exiting offer management...");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+    public static void viewOffers(String offersFile) {
+        System.out.println("\nToday's Offers:");
+        try (BufferedReader reader = new BufferedReader(new FileReader(offersFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" ");
+                if (parts.length == 3) {
+                    System.out.println(parts[0] + ": Original Price = " + parts[1] + " EGP, Discounted Price = " + parts[2] + " EGP");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading offers file: " + e.getMessage());
+        }
+    }
+    public static void addOffer(String offersFile, Scanner input) {
+        System.out.println("Enter item name:");
+        String itemName = input.nextLine();
+        System.out.println("Enter original price:");
+        double originalPrice = input.nextDouble();
+        System.out.println("Enter discounted price:");
+        double discountedPrice = input.nextDouble();
+        input.nextLine();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(offersFile, true))) {
+            writer.write(itemName + " " + originalPrice + " " + discountedPrice);
+            writer.newLine();
+            System.out.println("Offer added!");
+        } catch (IOException e) {
+            System.out.println("Error writing to offers file: " + e.getMessage());
+        }
+    }
+    public static void updateOffer(String offersFile, Scanner input) {
+        System.out.println("Enter the item name to update:");
+        String itemName = input.nextLine();
+        System.out.println("Enter new discounted price:");
+        double discountedPrice = input.nextDouble();
+        input.nextLine(); 
+        File inputFile = new File(offersFile);
+        File tempFile = new File("temp_offers.txt");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            String line;
+            boolean updated = false;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(itemName + " ")) {
+                    String[] parts = line.split(" ");
+                    writer.write(parts[0] + " " + parts[1] + " " + discountedPrice);
+                    writer.newLine();
+                    updated = true;
+                } else {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            if (!updated) {
+                System.out.println("Item not found in offers.");
+            }
+            if (inputFile.delete() && tempFile.renameTo(inputFile)) {
+                System.out.println("Offer updated.");
+            } else {
+                System.out.println("Error updating offers file.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error modifying offers file: " + e.getMessage());
+        }
+    }
+
+    public static void removeOffer(String offersFile, Scanner input) {
+        System.out.println("Enter the item name to remove:");
+        String itemName = input.nextLine();
+        File inputFile = new File(offersFile);
+        File tempFile = new File("temp_offers.txt");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith(itemName + " ")) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            if (inputFile.delete() && tempFile.renameTo(inputFile)) {
+                System.out.println("Offer removed.");
+            } else {
+                System.out.println("Error updating offers file.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error modifying offers file: " + e.getMessage());
+        }
+    }
+    public static void viewInventory(String inventoryFile) {
+        System.out.println("\nInventory:");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inventoryFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading inventory file: " + e.getMessage());
+        }
+    }
+    public static void viewOrders(String ordersFile) {
+        System.out.println("\nOrders:");
+        try (BufferedReader reader = new BufferedReader(new FileReader(ordersFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading orders file: " + e.getMessage());
+        }
+    }
+    public static void manageInventory(String inventoryFile, Scanner input) {
+        while (true) {
+            System.out.println("\nManage Inventory:");
+            System.out.println("1. Add Item");
+            System.out.println("2. Remove Item");
+            System.out.println("3. Update Item Price");
+            System.out.println("4. Exit");
+            System.out.print("Choose an option: ");
+            int choice = input.nextInt();
+            input.nextLine(); 
+            switch (choice) {
+                case 1:
+                    addItemToInventory(inventoryFile, input);
+                    break;
+                case 2:
+                    removeItemFromInventory(inventoryFile, input);
+                    break;
+                case 3:
+                    updateItemPrice(inventoryFile, input);
+                    break;
+                case 4:
+                    System.out.println("Exiting inventory management...");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+    public static void addItemToInventory(String inventoryFile, Scanner input) {
+        System.out.println("Enter category (e.g., Drinks, Groceries, Food):");
+        String category = input.nextLine();
+        System.out.println("Enter item name:");
+        String itemName = input.nextLine();
+        System.out.println("Enter price:");
+        double price = input.nextDouble();
+        input.nextLine();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(inventoryFile, true))) {
+            writer.write(category + " " + itemName + " " + price);
+            writer.newLine();
+            System.out.println("Item added to inventory!");
+        } catch (IOException e) {
+            System.out.println("Error writing to inventory file: " + e.getMessage());
+        }
+    }
+    public static void removeItemFromInventory(String inventoryFile, Scanner input) {
+        System.out.println("Enter the item name to remove:");
+        String itemName = input.nextLine();
+        File inputFile = new File(inventoryFile);
+        File tempFile = new File("temp_inventory.txt");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.contains(itemName)) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            if (inputFile.delete()) {
+                if (tempFile.renameTo(inputFile)) {
+                    System.out.println("Item removed from inventory.");
+                } else {
+                    System.out.println("Error renaming temp file.");
+                }
+            } else {
+                System.out.println("Error deleting original file.");
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error modifying inventory file: " + e.getMessage());
+        }
+    }
+    public static void updateItemPrice(String inventoryFile, Scanner input) {
+        System.out.println("Enter the item name to update:");
+        String itemName = input.nextLine();
+        System.out.println("Enter the new price:");
+        double newPrice = input.nextDouble();
+        input.nextLine(); 
+        File inputFile = new File(inventoryFile);
+        File tempFile = new File("temp_inventory.txt");
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(itemName)) {
+                    String[] parts = line.split(" ");
+                    String updatedLine = parts[0] + " " + parts[1] + " " + newPrice;
+                    writer.write(updatedLine);
+                    writer.newLine();
+                } else {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            if (inputFile.delete()) {
+                if (tempFile.renameTo(inputFile)) {
+                    System.out.println("Item price updated.");
+                } else {
+                    System.out.println("Error renaming temp file.");
+                }
+            } else {
+                System.out.println("Error deleting original file.");
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error modifying inventory file: " + e.getMessage());
+        }
+    }
+  public static void userMenu(String username, String inventoryFile, String ordersFile, Scanner input) {
+        String offersFile = "D:\\PFiles\\offers.txt";
+        List<String> cart = new ArrayList<>();
+        List<Double> prices = new ArrayList<>();
+        while (true) {
+            System.out.println("\nWelcome to the Supermarket!");
+            System.out.println("What would you like to browse?");
+            System.out.println("1. Drinks");
+            System.out.println("2. Groceries");
+            System.out.println("3. Food");
+            System.out.println("4. Today's Offers");
+            System.out.println("5. Checkout");
+            System.out.println("6. Exit");
+            if (input.hasNextInt()) {
+                int choice = input.nextInt();
+                input.nextLine(); 
+
+            switch (choice) {
+            case 1:
+                addToCart(inventoryFile, "Drinks", cart, prices, input);
+                break;
+            case 2:
+                addToCart(inventoryFile, "Groceries", cart, prices, input);
+                break;
+            case 3:
+                addToCart(inventoryFile, "Food", cart, prices, input);
+                break;
+            case 4:
+                checkout(username, cart, prices, ordersFile, input);
+                return;
+            case 5:
+                System.out.println("Thank you for visiting! Goodbye!");
+                return;
+            default:
+                System.out.println("Invalid choice. Please enter a number between 1 and 5.");
+        }
+    } else {
+    	
+        System.out.println("Invalid input. Please enter a number.");
+        input.nextLine(); 
+        try {
+	        Thread.sleep(1500); 
+	    } catch (InterruptedException e) {
+	        e.printStackTrace();
+	    }
+    }
+        }
+
+    public static void addToCart(String inventoryFile, String category, List<String> cart, List<Double> prices, Scanner input) {
+        System.out.println("\n" + category + " available:");
+        Map<String, Double> items = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(inventoryFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(category)) {
+                    String[] parts = line.split(" ");
+                    if (parts.length == 3) {
+                        String itemName = parts[1];
+                        double price = Double.parseDouble(parts[2]);
+                        items.put(itemName, price);
+                        System.out.println(itemName + " - " + price + " EGP");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading inventory file: " + e.getMessage());
+        }
+        System.out.println("\nChoose an item to add to your cart or press 0 to go back:");
+        String option = input.nextLine();
+        if (items.containsKey(option)) {
+            System.out.println("How many " + option + " would you like to add?");
+            int quantity = input.nextInt();
+            input.nextLine();
+            if (quantity > 0) {
+                cart.add(option + " x" + quantity);
+                prices.add(items.get(option) * quantity);
+                System.out.println(quantity + " " + option + " added to your cart.");
+            } else {
+                System.out.println("Invalid quantity. Try again.");
+            }
+        } else if (!option.equals("0")) {
+            System.out.println("Invalid item. Try again.");
+        }
+    }
+    public static void checkout(String username, List<String> cart, List<Double> prices, String ordersFile, Scanner input) {
+        if (cart.isEmpty()) {
+            System.out.println("Your cart is empty.");
+            return;
+        }
+        double total = 0;
+        for (double price : prices) {
+            total += price;
+        }
+        System.out.println("\nYour cart contains:");
+        for (String item : cart) {
+            System.out.println(item);
+        }
+        System.out.println("Total cost: " + total + " EGP");
+        double shippingCost = 20.0;
+        if (total >= 200) {
+            shippingCost = 0.0; 
+            System.out.println("Congratulations! You get free shipping.");
+        } else {
+            System.out.println("Shipping cost: " + shippingCost + " EGP");
+        }
+        double finalTotal = total + shippingCost;
+        System.out.println("Final total (including shipping): " + finalTotal + " EGP");
+        System.out.println("\nWould you like to confirm your order? (yes/no)");
+        String confirmation = input.nextLine();
+        if (confirmation.equalsIgnoreCase("yes")) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(ordersFile, true))) {
+                writer.write("Order by " + username + ":");
+                writer.newLine();
+                for (String item : cart) {
+                    writer.write(item);
+                    writer.newLine();
+                }
+                writer.write("Total: " + total + " EGP");
+                writer.newLine();
+                writer.write("Shipping: " + shippingCost + " EGP");
+                writer.newLine();
+                writer.write("Final Total: " + finalTotal + " EGP");
+                writer.newLine();
+                writer.write("======================================");
+                writer.newLine();
+                System.out.println("Order confirmed! Thank you for shopping with us.");
+            } catch (IOException e) {
+                System.out.println("Error writing to the orders file: " + e.getMessage());
+            }
+        } else if (confirmation.equalsIgnoreCase("no")) {
+            System.out.println("Order canceled. You can continue shopping.");
+            return; 
+        } else {
+            System.out.println("Enter a valid option (yes or no).");
+            }
+        }  
+}
